@@ -5,6 +5,7 @@ library(leaflet)
 library(httr)
 library(rgeolocate)
 library(shiny)
+library(ggplot2)
 library(dplyr)
 
 capitalize=function(x){
