@@ -7,6 +7,10 @@ library(rgeolocate)
 library(shiny)
 library(dplyr)
 
+capitalize=function(x){
+  gsub("(^|[[:space:]])([[:alpha:]])", "\\1\\U\\2", x, perl=TRUE)
+}
+
 #f0 <- tempfile()
 #download.file("https://raw.githubusercontent.com/rstudio/leaflet/gh-pages/json/us-states.geojson",destfile = f0)
 #states <- geojsonio::geojson_read(f0, what = "sp")
@@ -26,12 +30,13 @@ gun_mat <- gun_mat%>%
 names(gun_mat) <- c('from','to','value')
 
 gun_mat <- gun_mat %>%
-  dplyr::filter(!(grepl('^GUAM|^US VIRGIN',to)|grepl('^GUAM|^US VIRGIN',from)))
+  dplyr::filter(!(grepl('^GUAM|^US VIRGIN',to)|grepl('^GUAM|^US VIRGIN',from)))%>%
+  dplyr::mutate_at(.vars = vars(to,from),.funs=funs(capitalize(tolower(.))))
 
 whereami <- ip_api(httr::content(httr::GET('https://api.ipify.org?format=json'))[1])
 
-thisstate <- 'ILLINOIS'
+thisstate <- 'Illinois'
 
 if(whereami$country_code=='US'){
-  thisstate <- toupper(whereami$region_name)
+  thisstate <- whereami$region_name
 }

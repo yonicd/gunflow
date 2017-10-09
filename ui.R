@@ -10,6 +10,6 @@ ui <- bootstrapPage(
   leaflet::leafletOutput('leaf',height = '500px'),
   absolutePanel(top = 180, left = 10,
                 shiny::radioButtons('type','',c('Inflow','Outflow'),'Inflow',inline = TRUE),
-                shiny::selectInput('thisstate','select state',choices = toupper(states$name),selected = thisstate,width = '90%')
+                shiny::selectInput('thisstate','select state',choices = states$name,selected = thisstate,width = '90%')
   )
 )

@@ -9,7 +9,6 @@ shinyServer(function(input, output) {
                              dplyr::group_by(to)%>%
                              dplyr::mutate(value=ifelse(to==from,NA,value),pct=100*value/sum(value,na.rm = TRUE))%>%
                              dplyr::filter(to==input$thisstate)%>%
-                             dplyr::mutate(from=tolower(from))%>%
                              dplyr::rename(state=from)       
                          },
                          Outflow={
@@ -17,12 +16,14 @@ shinyServer(function(input, output) {
                              dplyr::group_by(from)%>%
                              dplyr::mutate(value=ifelse(to==from,NA,value),pct=100*value/sum(value,na.rm = TRUE))%>%
                              dplyr::filter(from==input$thisstate)%>%
-                             dplyr::mutate(to=tolower(to))%>%
                              dplyr::rename(state=to)
                          })
       
       mydata <- states@data   
-      mydata <- mydata%>%mutate(state=tolower(name))%>%left_join(gun_mat1%>%ungroup%>%select(state,value,pct),by='state')
+      mydata <- mydata%>%
+        rename(state=name)%>%
+        mutate(state=as.character(state))%>%
+        left_join(gun_mat1%>%ungroup%>%select(state,value,pct),by='state')
       
       states@data$pct <- mydata$pct
       states@data$level <- mydata$value
@@ -52,16 +53,16 @@ shinyServer(function(input, output) {
         labels <- switch (input$type,
                           Inflow={
                             sprintf(
-                              'Of the %s Firearms Recovered in <strong>%s</strong><br/> %g%% of them originating from <strong>%s</strong>',
+                              "Of the %s Out of State Firearms Recovered in <strong>%s</strong><br/> %g%% of them originating from <strong>%s</strong>",
                               sum(df$level,na.rm = TRUE),
-                              states$name,
+                              input$thisstate,
                               round(df$pct,2),
-                              input$thisstate
+                              states$name
                             )
                           },
                           Outflow={
                             sprintf(
-                              "Of the %s Firearms Recovered in <strong>%s</strong><br/> %g%% of them originating from <strong>%s</strong>",
+                              'Of the %s Out of State Firearms Originating from <strong>%s</strong><br/> %g%% were Recovered in <strong>%s</strong>',
                               sum(df$level,na.rm = TRUE),
                               input$thisstate,
                               round(df$pct,2),
