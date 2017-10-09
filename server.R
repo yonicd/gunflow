@@ -91,11 +91,25 @@ shinyServer(function(input, output) {
             style = list("font-weight" = "normal", padding = "3px 8px"),
             textsize = "15px",
             direction = "auto"))%>% 
-          addLegend(pal = pal, values = ~pct, opacity = 0.7, title = NULL,
+          addLegend(pal = pal, values = ~pct, opacity = 0.7, title = 'Percent',
                     position = "bottomleft",na.label = 'Selected State') 
       })  
       
       output$tbl <- renderDataTable({datin()@data})
+      
+      output$inset_plot <- renderPlot({
+        
+        idx <- which(net_flow$state==input$thisstate)
+        
+        net_plot +
+          geom_segment(x= idx, 
+                           xend=idx,
+                           y=ceiling(max(net_flow$ratio_net))+5,
+                           yend=pmax(0,net_flow$ratio_net[idx]), 
+                       arrow = arrow(length = unit(0.5, "cm")))
+      })
     })
+    
+    
     
 })

@@ -40,3 +40,42 @@ thisstate <- 'Illinois'
 if(whereami$country_code=='US'){
   thisstate <- whereami$region_name
 }
+
+calc <- function(side){
+  total <- gun_mat%>%
+    group_by_(side)%>%
+    summarise(total_sum=sum(value))%>%
+    rename_('state'=side)
+  
+  nonstate <- gun_mat%>%
+    filter(to!=from)%>%
+    group_by_(side)%>%
+    summarise(state_sum=sum(value))%>%
+    rename_('state'=side)
+  
+  ret <- nonstate%>%
+    left_join(total,by='state')%>%
+    mutate(ratio=100*state_sum/total_sum)
+  
+  names(ret)[-1] <- paste(names(ret)[-1],side,sep = '_')
+  
+  ret
+}
+
+net_flow <- calc(side = 'from')%>%
+  left_join(calc(side = 'to'),by='state')%>%
+  mutate(net=state_sum_from-state_sum_to,
+         ratio_net=ratio_from-ratio_to)%>%
+  arrange(desc(ratio_net))
+
+net_flow$state <- factor(net_flow$state,levels = net_flow$state)
+
+net_plot <- ggplot2::ggplot(net_flow,ggplot2::aes(x=state,y=ratio_net,
+                                      fill=cut(ratio_net,breaks = 10,include.lowest = TRUE)))+
+  ggplot2::geom_bar(stat='identity')+
+  scale_fill_brewer(palette = "RdYlBu",direction = -1,name=NULL)+
+  theme_bw()+
+  labs(title='Net Firearm Flow per 100 Firearms Between States',
+       subtitle='High is Net Exporter, Low is Net Importer',
+       y='Net Ratio per 100 Firearms',x='State')+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle=90),legend.position = 'bottom')
