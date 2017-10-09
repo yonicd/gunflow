@@ -9,8 +9,9 @@ ui <- bootstrapPage(
   tags$style(type = "text/css", "html, body {width:100%;height:80%}"),
   leaflet::leafletOutput('leaf',height = '500px'),
   absolutePanel(top = 180, left = 10,
-                shiny::radioButtons('type','',c('Inflow','Outflow'),'Inflow',inline = TRUE),
-                shiny::selectInput('thisstate','select state',choices = states$name,selected = thisstate,width = '90%')
+                shiny::radioButtons('type','Direction',c('Inflow','Outflow'),'Inflow',inline = TRUE),
+                shiny::radioButtons('scale','Scale Type',c('National','State'),inline=TRUE),
+                shiny::selectInput('thisstate','Select state',choices = states$name,selected = thisstate,width = '90%')
   ),
   shiny::plotOutput('inset_plot')
 )

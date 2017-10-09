@@ -32,11 +32,19 @@ shinyServer(function(input, output) {
       states
     })
     
-    observeEvent(datin(),{
+    observeEvent(c(datin(),input$scale),{
+      
+      d <- switch(input$scale,
+                  National={
+                    seq(0,35)
+                  },
+                  State={
+                    datin()$pct
+                  })
       
       pal <- colorNumeric(
         palette = "RdYlBu",
-        domain = datin()$pct,na.color = 'black',reverse = TRUE)
+        domain = d,na.color = 'black',reverse = TRUE)
       
       
       output$leaf <- leaflet::renderLeaflet({
@@ -91,7 +99,7 @@ shinyServer(function(input, output) {
             style = list("font-weight" = "normal", padding = "3px 8px"),
             textsize = "15px",
             direction = "auto"))%>% 
-          addLegend(pal = pal, values = ~pct, opacity = 0.7, title = 'Percent',
+          addLegend(pal = pal, values = switch(input$scale,National=0:35,State=~pct), opacity = 0.7, title = 'Percent',
                     position = "bottomleft",na.label = 'Selected State') 
       })  
       
