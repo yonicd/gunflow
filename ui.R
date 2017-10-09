@@ -12,5 +12,5 @@ ui <- bootstrapPage(
                 shiny::radioButtons('type','',c('Inflow','Outflow'),'Inflow',inline = TRUE),
                 shiny::selectInput('thisstate','select state',choices = states$name,selected = thisstate,width = '90%')
   ),
-  shiny::plotOutput('inset_plot',width = '100%')
+  shiny::plotOutput('inset_plot')
 )

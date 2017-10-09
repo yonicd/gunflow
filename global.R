@@ -6,6 +6,7 @@ library(httr)
 library(rgeolocate)
 library(shiny)
 library(ggplot2)
+library(sp)
 library(dplyr)
 
 capitalize=function(x){

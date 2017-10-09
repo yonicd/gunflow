@@ -8,8 +8,8 @@ R users - **please** deploy from R console as to not deplete the account on shin
 
 ```r
 
-pkgs <- c('reshape2','geojson','readxl',
-'leaflet','httr','rgeolocate','shiny','dplyr')
+pkgs <- c('reshape2','geojson','readxl','ggplot2',
+'leaflet','httr','rgeolocate','shiny','sp','dplyr')
 
 check <- sapply(pkgs,require,warn.conflicts = TRUE,character.only = TRUE)
 
@@ -24,3 +24,5 @@ shiny::runGitHub('yonicd/gunflow')
 ```
 
 ![](https://github.com/yonicd/gunflow/blob/master/gunflow.gif?raw=true)
+
+![](https://github.com/yonicd/gunflow/blob/master/gunflow2.gif?raw=true)

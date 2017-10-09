@@ -96,20 +96,51 @@ shinyServer(function(input, output) {
       })  
       
       output$tbl <- renderDataTable({datin()@data})
-      
+
       output$inset_plot <- renderPlot({
         
-        idx <- which(net_flow$state==input$thisstate)
+        idx <- which(net_flow$state%in%c(input$thisstate))
         
         net_plot +
           geom_segment(x= idx, 
-                           xend=idx,
-                           y=ceiling(max(net_flow$ratio_net))+5,
-                           yend=pmax(0,net_flow$ratio_net[idx]), 
+                       xend=idx,
+                       y=ceiling(max(net_flow$ratio_net))+5,
+                       yend=pmax(0,net_flow$ratio_net[idx]), 
                        arrow = arrow(length = unit(0.5, "cm")))
       })
+      
     })
     
     
+    shiny::observeEvent(c(input$leaf_shape_mouseover),{
+      hovering <- input$leaf_shape_mouseover
+      state.names <- as.character(states@data$name)
+      hover.state <- state.names[which(sapply(states@polygons,function(x) point.in.polygon(hovering$lng,hovering$lat,x@Polygons[[1]]@coords[,1],x@Polygons[[1]]@coords[,2]))==1)]
+      
+      
+
+      output$inset_plot <- renderPlot({
+        
+      idx1 <- which(net_flow$state==c(input$thisstate))
+      idx2 <- which(net_flow$state==c(hover.state))
+        
+      p <-   net_plot +
+          geom_segment(x= idx1, 
+                       xend=idx1,
+                       y=ceiling(max(net_flow$ratio_net))+5,
+                       yend=pmax(0,net_flow$ratio_net[idx1]), 
+                       arrow = arrow(length = unit(0.5, "cm")))
+      
+      if(length(idx2)==1){
+       p <- p + geom_segment(x= idx2, 
+                     xend=idx2,
+                     y=ceiling(max(net_flow$ratio_net))+5,
+                     yend=pmax(0,net_flow$ratio_net[idx2]),linetype=2,
+                     arrow = arrow(length = unit(0.5, "cm")))
+      }
+      p
+    })
+      
+    })
     
 })
