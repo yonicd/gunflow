@@ -1,6 +1,5 @@
 shinyServer(function(input, output) {
 
-    
     datin <- shiny::eventReactive(c(input$thisstate,input$type),{
 
       gun_mat1 <- switch(input$type,
@@ -155,14 +154,18 @@ shinyServer(function(input, output) {
       
       tot$chosen=as.numeric((tot$state==input$thisstate))
       net_flow$chosen <- ifelse(net_flow$state==thisstate,'State Selected','State Not Selected')
-      
+      network_dat$alpha_pow$chosen <- as.numeric((network_dat$alpha_pow$state==input$thisstate))
         
       plotsToSVG=list(
         svglite::xmlSVG({show(p)},standalone=TRUE,width = 12),
-        svglite::xmlSVG({show(network_plot)},standalone=TRUE,width = 12),
         svglite::xmlSVG({
           show(scatter_plot+geom_point(aes(size=chosen),show.legend = FALSE,data=tot))
-          },standalone=TRUE,width = 12)
+        },standalone=TRUE,width = 12),
+        svglite::xmlSVG({show(network_plot)},standalone=TRUE,width = 12),
+        svglite::xmlSVG({
+          show(power_plot+
+                 geom_point(aes(size=chosen),show.legend = FALSE,data=network_dat$alpha_pow)
+               )},standalone=TRUE,width = 12)
       )
       
       sapply(plotsToSVG,function(sv){paste0("data:image/svg+xml;utf8,",as.character(sv))})
