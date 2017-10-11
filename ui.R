@@ -13,5 +13,5 @@ ui <- bootstrapPage(
                 shiny::radioButtons('scale','Scale Type',c('National','State'),inline=TRUE),
                 shiny::selectInput('thisstate','Select state',choices = states$name,selected = thisstate,width = '90%')
   ),
-  shiny::plotOutput('inset_plot')
+  slickR::slickROutput('slick',width='100%',height='400px')
 )
