@@ -100,10 +100,22 @@ power_plot <- network_dat$alpha_pow%>%
   labs(x='Level of Antagonistic Relations',
        y='Level of Cooperative Relations',
        title = "State Power Centrality of Interstate Firearms Directed Graph",
-       subtite = "Bonacich Exponent Levels (-0.5 , 0.5)",
+       subtitle=paste(c("Cooperative Relations: If ego has neighbors who do not have many connections to others,",
+                        "those neighbors are likely to be dependent on ego, making ego more powerful.",
+                        "\nAntagonistic Relations: If ego has weak neighbors it increases the ego centrality power"),
+                      collapse='\n'),
        caption = "Source: Bureau of Alcohol, Firearms and Explosives (2016)")
 
-scatter_plot <- scatter_fun(gun_mat)
+tot <- scatter_fun(gun_mat)
+
+scatter_plot <- tot%>%
+  ggplot(aes(x=from_pct,y=to_pct,fill=cut(within_pct,5,include.lowest = TRUE)))+
+  ggrepel::geom_label_repel(aes(label=state),alpha=.7)+
+  scale_fill_brewer(palette = "RdYlBu",direction = -1,name='Internal Rate')+
+  theme_minimal(base_size = plot_size)+
+  labs(title='Inflow, Outflow and Internal Firearms Rate per 100',
+       caption = "Source: Bureau of Alcohol, Firearms and Explosives (2016)",
+       x='Outflow Rate',y='Inflow Rate')
 
 # g <- gun_mat0[,-1]
 # row.names(g) <- gun_mat0[,1]

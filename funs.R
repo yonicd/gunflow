@@ -98,7 +98,7 @@ scatter_fun <- function(gun_mat){
   
   tot$total <- apply(tot[,-1],1,sum)
   
-  tot <- tot%>%dplyr::mutate(within_pct=100*within_total/total,from_pct=1000*from_total/total,to_pct=1000*to_total/total)
+  tot <- tot%>%dplyr::mutate(within_pct=100*within_total/total,from_pct=100*from_total/total,to_pct=100*to_total/total)
   
   tot$state <- factor(tot$state,levels=tot$state[order(apply(tot[,c(6:8)],1,sum),decreasing = TRUE)])
   
@@ -108,13 +108,6 @@ scatter_fun <- function(gun_mat){
   
   tot$total_pct <- apply(tot[,c(6:8)],1,sum)
   
-  tot%>%
-    ggplot(aes(x=from_pct,y=to_pct,fill=cut(within_pct,5,include.lowest = TRUE)))+
-    ggrepel::geom_label_repel(aes(label=state),alpha=.7)+
-    scale_fill_brewer(palette = "RdYlBu",direction = -1,name='Within Percent')+
-    theme_minimal(base_size = plot_size)+
-    labs(title='Rate per 1000 Firearms Inflow, Outflow and Within',
-         caption = "Source: Bureau of Alcohol, Firearms and Explosives (2016)",
-         x='Outflow Rate',y='Inflow Rate')
+  tot
 }
 
