@@ -1,10 +1,11 @@
 shinyServer(function(input, output) {
 
-    datin <- shiny::eventReactive(c(input$thisstate,input$type),{
+    datin <- shiny::eventReactive(c(input$thisstate,input$type,input$year),{
 
       gun_mat1 <- switch(input$type,
                          Inflow={
                            gun_mat%>%
+                             dplyr::filter(year==input$year)%>%
                              dplyr::group_by(to)%>%
                              dplyr::mutate(value1=ifelse(to==from,NA,value),pct=100*value1/sum(value1,na.rm = TRUE))%>%
                              dplyr::filter(to==input$thisstate)%>%
@@ -12,6 +13,7 @@ shinyServer(function(input, output) {
                          },
                          Outflow={
                            gun_mat%>%
+                             dplyr::filter(year==input$year)%>%
                              dplyr::group_by(from)%>%
                              dplyr::mutate(value1=ifelse(to==from,NA,value),pct=100*value1/sum(value1,na.rm = TRUE))%>%
                              dplyr::filter(from==input$thisstate)%>%
@@ -104,7 +106,7 @@ shinyServer(function(input, output) {
             textsize = "15px",
             direction = "auto"))%>% 
           addLegend(pal = pal, values = switch(input$scale,National=0:35,State=~pct), opacity = 0.7, title = 'Percent',
-                    position = "bottomleft",na.label = 'Selected State') 
+                    position = "bottomright",na.label = 'Selected State') 
 
       })  
       
@@ -132,40 +134,150 @@ shinyServer(function(input, output) {
     #   
       
 
-      inset_plot <- reactive({
-        
-      idx1 <- which(net_flow$state==c(input$thisstate))
-      #idx2 <- which(net_flow$state==c(hover.state))
-        
-      p <-   net_plot +
-          geom_segment(x= idx1, 
-                       xend=idx1,
-                       y=ceiling(max(net_flow$ratio_net))+5,
-                       yend=pmax(0,net_flow$ratio_net[idx1]), 
-                       arrow = arrow(length = unit(0.5, "cm")))
+    atf_plot_base <- eventReactive(input$thisstate,{
+      atf_marginal <- atf_data%>%
+        filter(year==2016)%>%
+        filter(base_rate>1|state==input$thisstate)%>%
+        mutate(chosen=state==input$thisstate)
       
-      # if(length(idx2)==1){
-      #  p <- p + geom_segment(x= idx2, 
-      #                xend=idx2,
-      #                y=ceiling(max(net_flow$ratio_net))+5,
-      #                yend=pmax(0,net_flow$ratio_net[idx2]),linetype=2,
-      #                arrow = arrow(length = unit(0.5, "cm")))
-      # }
+      atf_data%>%
+        ggplot(aes(x=year,y=base_rate,group=state.abb))+
+        geom_line()+
+        geom_point(data=atf_marginal)+
+        ggrepel::geom_label_repel(aes(label=state.abb,fill=chosen),
+                                  data=atf_marginal,
+                                  show.legend = FALSE,
+                                  segment.alpha = .3,
+                                  segment.colour = 'blue')+
+        facet_wrap(~Division)+
+        scale_x_continuous(breaks=2010:2016,limits = c(2010,2017))+
+        theme_minimal()+
+        labs(title = 'Rate of Firearm Registration Per 100 individuals (age>17,Base year 2010)',
+             subtitle = 'Label indicates states in 2016 with rate of change above 100% (Blue is selected state)',
+             caption = 'Source: Bureau of Alcohol, Firearms and Explosives',
+             x = 'Year',
+             y = 'Rate of Change (Base year 2010)')
+    })
+    
+    atf_plot <- eventReactive(input$thisstate,{
       
-      tot$chosen=as.numeric((tot$state==input$thisstate))
-      net_flow$chosen <- ifelse(net_flow$state==thisstate,'State Selected','State Not Selected')
-      network_dat$alpha_pow$chosen <- as.numeric((network_dat$alpha_pow$state==input$thisstate))
+      this_atf <- atf_data
+      
+      if(input$thisstate!='Wyoming')
+        this_atf <- this_atf%>%filter(state!='Wyoming')
+      
+      this_atf$chosen <- this_atf$state==input$thisstate
+      
+      atf_marginal <- this_atf%>%
+        filter(year==2016)%>%
+        filter(rate>3|state==input$thisstate)%>%
+        mutate(chosen=state==input$thisstate)
+      
+      this_atf%>% 
+        ggplot(aes(x=year,y=rate,group=state.abb))+
+        geom_line()+
+        ggrepel::geom_label_repel(aes(label=state.abb,fill=chosen),
+                                  data=atf_marginal,
+                                  show.legend = FALSE,
+                                  segment.alpha = .3,
+                                  segment.colour = 'blue')+
+        facet_wrap(~Division)+
+        scale_x_continuous(breaks=2010:2016,limits = c(2010,2017))+
+        theme_minimal()+
+        labs(title = 'Rate of Firearm Registration Per 100 individuals (age>17)',
+             subtitle = 'Label indicates states in 2016 with rate above 3 Firearms per 100 (Blue is selected state)',
+             caption = 'Source: Bureau of Alcohol, Firearms and Explosives',
+             x = 'Year',
+             y = 'Rate per 100 Individuals (age>17)')
+    })
+    
+    power_plot <- eventReactive(c(input$year,input$thisstate),{
+      
+      this_net_dat <- network_dat[[input$year]]
+      
+      this_net_dat$alpha_pow$chosen <- as.numeric((this_net_dat$alpha_pow$state==input$thisstate))
+      
+      this_net_dat$alpha_pow%>%
+      ggplot(aes(x=neg,y=pos,label=state,fill=Division))+
+      geom_hline(yintercept = 0,linetype=2) + 
+      geom_vline(xintercept = 0,linetype=2) + 
+      ggrepel::geom_label_repel()+theme_minimal(base_size = plot_size)+
+      geom_point(aes(size=chosen),show.legend = FALSE,data=this_net_dat$alpha_pow) +
+        scale_y_continuous(limits = c(-4,4)) +
+        scale_x_continuous(limits = c(-4,4)) + 
+      labs(x='(<== WEAKER | STRONGER ==>)\nLevel of Antagonistic Relations',
+           y='Level of Cooperative Relations\n(<== STRONGER | WEAKER ==>)',
+           title = "State Power Centrality of Interstate Firearms Directed Graph",
+           subtitle=paste(c("Cooperative Relations: If ego has neighbors who have many connections to others,",
+                            "making ego more powerful, because it has the 'right' connections.",
+                            "\nAntagonistic Relations: If ego has weak neighbors it increases the ego centrality power"),
+                          collapse='\n'),
+           caption = sprintf("Source: Bureau of Alcohol, Firearms and Explosives (%s)",input$year))
+      })
+      
+    
+    network_plot <- eventReactive(c(input$year,input$thisstate),{
+      
+      this_net_flow <- net_flow%>%filter(year==input$year)
+      
+      this_net_flow$state <- factor(this_net_flow$state,levels = this_net_flow$state)
+      
+      idx1 <- which(this_net_flow$state==c(input$thisstate))
+      
+      this_net_flow$chosen <- ifelse(this_net_flow$state==input$thisstate,'State Selected','State Not Selected')
+      
+      this_net_plot <- ggplot2::ggplot(this_net_flow,
+                      ggplot2::aes(x=state,y=ratio_net,
+                                   fill=cut(ratio_net,
+                                            breaks = 10,
+                                            include.lowest = TRUE)))+
+        ggplot2::geom_bar(stat='identity')+
+        scale_fill_brewer(palette = "RdYlBu",direction = -1,name=NULL)+
+        theme_minimal(base_size = plot_size)+
+        labs(title='Net Firearm Flow per 100 Firearms Between States',
+             subtitle='High is Net Exporter, Low is Net Importer',
+             caption = sprintf("Source: Bureau of Alcohol, Firearms and Explosives (%s)",input$year),
+             y='Net Ratio per 100 Firearms',x='State')+
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle=90),legend.position = 'bottom')
+      
+      this_net_plot +
+        geom_segment(x= idx1, 
+                     xend=idx1,
+                     y=ceiling(max(this_net_flow$ratio_net))+5,
+                     yend=pmax(0,this_net_flow$ratio_net[idx1]), 
+                     arrow = arrow(length = unit(0.5, "cm")))
+    })
+    
+    
+    scatter_plot <- eventReactive(c(input$year,input$thisstate),{
+      this_tot <- tot%>%filter(year==input$year)
+      
+      this_tot$chosen=as.numeric((this_tot$state==input$thisstate))  
+      
+      this_tot%>%
+        ggplot(aes(x=from_pct,y=to_pct,fill=cut(within_pct,5,include.lowest = TRUE)))+
+        ggrepel::geom_label_repel(aes(label=state_grade),alpha=.7)+
+        scale_fill_brewer(palette = "RdYlBu",direction = -1,name='Internal Rate')+
+        geom_point(aes(size=chosen),show.legend = FALSE,data=this_tot)+
+        theme_minimal(base_size = plot_size)+
+        labs(title='Inflow, Outflow and Internal Firearms Rate per 100',
+             subtitle='Label Attributes: Higher grades reflect stricter gunlaws, * reflects state with background checks',
+             caption = sprintf("Sources: Bureau of Alcohol, Firearms and Explosives (%s)\n Law Center To Prevent Gun Violence",input$year),
+             x='Outflow Rate',y='Inflow Rate')
+    })
+    
+    
+    
+    
+      inset_plot <- eventReactive(c(input$year,input$thisstate),{
         
       plotsToSVG=list(
-        svglite::xmlSVG({show(p)},standalone=TRUE,width = 12),
-        svglite::xmlSVG({
-          show(scatter_plot+geom_point(aes(size=chosen),show.legend = FALSE,data=tot))
-        },standalone=TRUE,width = 12),
-        svglite::xmlSVG({show(network_plot)},standalone=TRUE,width = 12),
-        svglite::xmlSVG({
-          show(power_plot+
-                 geom_point(aes(size=chosen),show.legend = FALSE,data=network_dat$alpha_pow)
-               )},standalone=TRUE,width = 12)
+        svglite::xmlSVG({show(atf_plot())},standalone=TRUE,width = 12),
+        svglite::xmlSVG({show(atf_plot_base())},standalone=TRUE,width = 12),
+        svglite::xmlSVG({show(network_plot())},standalone=TRUE,width = 12),
+        svglite::xmlSVG({show(scatter_plot())},standalone=TRUE,width = 12),
+        svglite::xmlSVG({show(network_dat[[input$year]]$network_plot)},standalone=TRUE,width = 12),
+        svglite::xmlSVG({show(power_plot())},standalone=TRUE,width = 12)
       )
       
       sapply(plotsToSVG,function(sv){paste0("data:image/svg+xml;utf8,",as.character(sv))})
@@ -178,6 +290,4 @@ shinyServer(function(input, output) {
                        slickOpts = list(autoplay=TRUE,dots=TRUE,autoplaySpeed=7000))
       })
             
-    # })
-    
 })
