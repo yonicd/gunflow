@@ -136,7 +136,7 @@ shinyServer(function(input, output) {
 
     atf_plot_base <- eventReactive(input$thisstate,{
       atf_marginal <- atf_data%>%
-        filter(year==2016)%>%
+        filter(year==2017)%>%
         filter(base_rate>1|state==input$thisstate)%>%
         mutate(chosen=state==input$thisstate)
       
@@ -150,10 +150,10 @@ shinyServer(function(input, output) {
                                   segment.alpha = .3,
                                   segment.colour = 'blue')+
         facet_wrap(~Division)+
-        scale_x_continuous(breaks=2010:2016,limits = c(2010,2017))+
+        scale_x_continuous(breaks=2010:2017,limits = c(2010,2018))+
         theme_minimal()+
         labs(title = 'Rate of Firearm Registration Per 100 individuals (age>17,Base year 2010)',
-             subtitle = 'Label indicates states in 2016 with rate of change above 100% (Blue is selected state)',
+             subtitle = 'Label indicates states in 2017 with rate of change above 100% (Blue is selected state)',
              caption = 'Source: Bureau of Alcohol, Firearms and Explosives',
              x = 'Year',
              y = 'Rate of Change (Base year 2010)')
@@ -169,7 +169,7 @@ shinyServer(function(input, output) {
       this_atf$chosen <- this_atf$state==input$thisstate
       
       atf_marginal <- this_atf%>%
-        filter(year==2016)%>%
+        filter(year==2017)%>%
         filter(rate>3|state==input$thisstate)%>%
         mutate(chosen=state==input$thisstate)
       
@@ -182,10 +182,10 @@ shinyServer(function(input, output) {
                                   segment.alpha = .3,
                                   segment.colour = 'blue')+
         facet_wrap(~Division)+
-        scale_x_continuous(breaks=2010:2016,limits = c(2010,2017))+
+        scale_x_continuous(breaks=2010:2017,limits = c(2010,2018))+
         theme_minimal()+
         labs(title = 'Rate of Firearm Registration Per 100 individuals (age>17)',
-             subtitle = 'Label indicates states in 2016 with rate above 3 Firearms per 100 (Blue is selected state)',
+             subtitle = 'Label indicates states in 2017 with rate above 3 Firearms per 100 (Blue is selected state)',
              caption = 'Source: Bureau of Alcohol, Firearms and Explosives',
              x = 'Year',
              y = 'Rate per 100 Individuals (age>17)')
@@ -250,7 +250,7 @@ shinyServer(function(input, output) {
     
     
     scatter_plot <- eventReactive(c(input$year,input$thisstate),{
-      this_tot <- tot%>%filter(year==input$year)
+      this_tot <- tot%>%ungroup%>%filter(year==input$year)
       
       this_tot$chosen=as.numeric((this_tot$state==input$thisstate))  
       

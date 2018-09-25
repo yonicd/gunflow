@@ -9,9 +9,12 @@ net_dat <- function(gun_mat_in=gun_mat,min_n=30,min_corr=.5){
 
   
   x <- gun_mat_out[rep(seq_len(nrow(gun_mat_out)), times=gun_mat_out$value),c('year','from','to')]
-  
-  gun_mat_cors<- plyr::ddply(x,c('year'),.fun=function(x0) x0%>%select(-year)%>%widyr::pairwise_cor(from, to, sort = TRUE))
-  
+
+  gun_mat_cors<- plyr::ddply(x,c('year'),.fun=function(x0){
+
+    x0%>%ungroup()%>%select(row_col=from,column_col=to)%>%widyr::pairwise_cor(row_col, column_col, sort = TRUE)
+  })
+
   filtered_cors <- gun_mat_cors%>%
     group_by(year) %>%
     dplyr::filter(correlation > min_corr)%>%
@@ -27,7 +30,7 @@ net_dat <- function(gun_mat_in=gun_mat,min_n=30,min_corr=.5){
       select(state,everything())
   
   
-  lout <- plyr::dlply(data.frame(year=2011:2016),c('year'),.fun=function(yr){
+  lout <- plyr::dlply(data.frame(year=2011:2017),c('year'),.fun=function(yr){
     set.seed(1234)
     network_plot <- filtered_cors %>% filter(year==yr)%>%
       igraph::graph_from_data_frame(vertices = net_flow_out%>%filter(year==yr),directed = TRUE) %>%

@@ -32,22 +32,23 @@ Sys.setenv(MAPBOX_ACCESS_TOKEN=read.dcf('www/MYTOKEN')[1])
 #download.file('https://www.atf.gov/docs/undefined/sourcerecoverybystatecy2016xlsx/download',destfile = f1)
 
 states <- geojsonio::geojson_read('www/us-states.geojson', what = "sp")
-
-# gun_mat <- plyr::ddply(data.frame(year=2011:2016),c('year'),.fun=function(x){
+# 
+# gun_mat <- plyr::ddply(data.frame(year=2011:2017),c('year'),.fun=function(x){
 #   gun_mat0 <- readxl::read_xlsx(sprintf('www/final_source_recovery_by_state-cy_%s.xlsx',x),col_names = TRUE,range = 'B2:BD56')
-#   
+# 
 #   gun_mat <- gun_mat0%>%
 #     reshape2::melt(.,'X__1')
-#   
+# 
 #   names(gun_mat) <- c('from','to','value')
-#   
+# 
 #   gun_mat %>%
 #     dplyr::filter(!(grepl('^GUAM|^US VIRGIN',to)|grepl('^GUAM|^US VIRGIN',from)))%>%
 #     dplyr::mutate_at(.vars = vars(to,from),.funs=funs(capitalize(tolower(.))))%>%
 #     dplyr::mutate(to=ifelse(to=='Dst Of Columbia','District Of Columbia',to),
 #                   from=ifelse(from=='Dst Of Columbia','District Of Columbia',from))
 # })
-                  
+#                   
+# save(gun_mat,file = 'www/gun_mat.rda',compress = TRUE)
 
 load('www/gun_mat.rda')
 
@@ -74,11 +75,20 @@ network_dat <- net_dat(gun_mat)
 
 tot <- scatter_fun(gun_mat)
 
-# gun_ranking <- (xml2::read_html('http://smartgunlaws.org/scorecard/')%>%rvest::html_nodes(xpath = '//*[@id="rankingsTable"]')%>%rvest::html_table())[[1]]
-# 
-# names(gun_ranking) <- c('rank','state','grade','death_rate','smart_law')
-# 
+ # gun_ranking_2017 <- (xml2::read_html('http://smartgunlaws.org/scorecard/')%>%rvest::html_nodes(xpath = '//*[@id="rankings-table"]')%>%rvest::html_table())[[1]]
+ # 
+ # names(gun_ranking_2017) <- c('rank','state','grade','death_rate','death_rate_per')
+ # 
+ # gun_ranking_2017$year <- 2017
+ # gun_ranking_2017$smart_law <- ''
+ # gun_ranking_2017 <- gun_ranking_2017%>%
+ #   dplyr::select(-death_rate_per)%>%
+ #   dplyr::arrange(rank)%>%
+ #   dplyr::mutate(rank=as.character(rank))
+ 
+# gun_ranking <- dplyr::bind_rows(gun_ranking,gun_ranking_2017)
 # gun_ranking$smart_law[nzchar(gun_ranking$smart_law)] <- '*'
+# save(gun_ranking,file='www/gun_ranking.rda',compress = TRUE)
 
 load('www/gun_ranking.rda')
 
